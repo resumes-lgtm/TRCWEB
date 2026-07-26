@@ -1,0 +1,45 @@
+name: Extract website files
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'theresumechic-site.zip'
+      - '.github/workflows/extract-site.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Extract website into repository root
+        run: |
+          rm -rf .site-extract
+          mkdir .site-extract
+          unzip -q theresumechic-site.zip -d .site-extract
+          if [ -d .site-extract/theresumechic-site ]; then
+            cp -R .site-extract/theresumechic-site/. .
+          else
+            cp -R .site-extract/. .
+          fi
+          rm -rf .site-extract
+          rm -f theresumechic-site.zip
+          touch .nojekyll
+
+      - name: Commit extracted website
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Extract website files for GitHub Pages"
+            git push
+          fi
