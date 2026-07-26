@@ -6,7 +6,6 @@ on:
     branches: [main]
     paths:
       - 'theresumechic-site.zip'
-      - '.github/workflows/extract-site.yml'
 
 permissions:
   contents: write
@@ -18,7 +17,18 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Check for ZIP
+        id: zipcheck
+        run: |
+          if [ -f theresumechic-site.zip ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "The website ZIP has already been extracted. Nothing to do."
+          fi
+
       - name: Extract website into repository root
+        if: steps.zipcheck.outputs.exists == 'true'
         run: |
           rm -rf .site-extract
           mkdir .site-extract
@@ -33,6 +43,7 @@ jobs:
           touch .nojekyll
 
       - name: Commit extracted website
+        if: steps.zipcheck.outputs.exists == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
